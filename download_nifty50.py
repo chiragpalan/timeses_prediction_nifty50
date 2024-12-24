@@ -34,6 +34,8 @@ def initialize_database(db_path):
 def append_to_database(data, db_path):
     conn = sqlite3.connect(db_path)
     try:
+        # Ensure column names are in the correct order before appending
+        data = data[['datetime', 'open', 'high', 'low', 'close', 'volume']]
         data.to_sql('nifty50', conn, if_exists='append', index=False)
         print("Data appended successfully.")
     except Exception as e:
@@ -47,6 +49,8 @@ def download_nifty50():
     ticker = "^NSEI"
     data = yf.download(ticker, interval="5m", period="1d")
     data.reset_index(inplace=True)
+    
+    # Rename columns to match the database schema
     data.rename(columns={
         'Datetime': 'datetime', 
         'Open': 'open', 
@@ -55,7 +59,11 @@ def download_nifty50():
         'Close': 'close', 
         'Volume': 'volume'
     }, inplace=True)
+    
+    # Convert datetime to string format
     data['datetime'] = data['datetime'].dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Select the relevant columns
     nifty_data = data[['datetime', 'open', 'high', 'low', 'close', 'volume']]
     return nifty_data
 
