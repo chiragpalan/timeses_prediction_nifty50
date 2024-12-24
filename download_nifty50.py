@@ -1,47 +1,72 @@
-import pandas as pd
-from datetime import datetime
-import sqlite3
 import os
-from git import Repo
+import sqlite3
+import pandas as pd
 import yfinance as yf
+from datetime import datetime
 
-# Function to download Nifty 50 data
-def download_nifty50_data():
-    ticker = "^NSEI"  # Ticker for Nifty 50
-    data = yf.download(ticker, interval="5m", period="1d")
-    data.reset_index(inplace=True)
-    return data
+# Define database path
+db_path = "data/nifty50.db"
 
-# Append data to database
+# Function to create a database if it doesn't exist
+def initialize_database(db_path):
+    if not os.path.exists(db_path):
+        print("Database does not exist. Creating a new database...")
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        # Create a table to store Nifty 50 data if needed
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS nifty50 (
+                datetime TEXT PRIMARY KEY,
+                open REAL,
+                high REAL,
+                low REAL,
+                close REAL,
+                volume INTEGER
+            )
+        ''')
+        conn.commit()
+        conn.close()
+        print("Database created successfully.")
+    else:
+        print("Database already exists.")
+
+# Function to append data to the database
 def append_to_database(data, db_path):
     conn = sqlite3.connect(db_path)
-    data.to_sql("nifty50", conn, if_exists="append", index=False)
-    conn.close()
+    try:
+        data.to_sql('nifty50', conn, if_exists='append', index=False)
+        print("Data appended successfully.")
+    except Exception as e:
+        print(f"Error appending data: {e}")
+    finally:
+        conn.close()
 
-# Push changes to GitHub
-def push_to_github(repo_path, commit_message):
-    repo = Repo(repo_path)
-    repo.git.add(update=True)
-    repo.index.commit(commit_message)
-    origin = repo.remote(name='origin')
-    origin.push()
+# Function to download Nifty 50 data
+def download_nifty50():
+    print("Downloading Nifty 50 data...")
+    ticker = "^NSEI"
+    data = yf.download(ticker, interval="5m", period="1d")
+    data.reset_index(inplace=True)
+    data.rename(columns={
+        'Datetime': 'datetime', 
+        'Open': 'open', 
+        'High': 'high', 
+        'Low': 'low', 
+        'Close': 'close', 
+        'Volume': 'volume'
+    }, inplace=True)
+    data['datetime'] = data['datetime'].dt.strftime('%Y-%m-%d %H:%M:%S')
+    nifty_data = data[['datetime', 'open', 'high', 'low', 'close', 'volume']]
+    return nifty_data
 
+# Main execution
 if __name__ == "__main__":
-    # Define file paths
-    repo_path = "/github/workspace/timeses_prediction_nifty50"  # GitHub repo path
-    db_path = os.path.join(repo_path, "data", "nifty50.db")
+    # Ensure the database exists
+    initialize_database(db_path)
 
     # Download data
-    print("Downloading Nifty 50 data...")
-    nifty_data = download_nifty50_data()
+    nifty_data = download_nifty50()
 
     # Append to database
     print("Appending data to database...")
     append_to_database(nifty_data, db_path)
-
-    # Push changes to GitHub
-    print("Pushing changes to GitHub...")
-    push_to_github(repo_path, f"Daily update: {datetime.now().strftime('%Y-%m-%d')}")
-
-    print("Task completed!")
-
