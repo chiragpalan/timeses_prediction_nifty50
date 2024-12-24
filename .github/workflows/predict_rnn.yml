@@ -5,6 +5,7 @@ on:
     # Run every 15 minutes between 9:30 AM and 3:15 PM IST
     - cron: '45 4-9 * * 1-5'  # 9:30 AM IST to 3:15 PM IST (Monday-Friday)
     - cron: '45 4 * * 6'      # 9:30 AM IST (Saturday)
+  workflow_dispatch:
 
 jobs:
   predict-nifty:
