@@ -1,32 +1,35 @@
-import os
 import sqlite3
-import pandas as pd
 import yfinance as yf
-from datetime import datetime
+import os
+import pandas as pd
 
 # Define database path
 db_path = "data/nifty50.db"
 
-# Function to create a database if it doesn't exist
-def initialize_database(db_path):
+# Function to create a database if it doesn't exist and create table dynamically
+def initialize_database(db_path, data):
     if not os.path.exists(db_path):
         print("Database does not exist. Creating a new database...")
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        # Create a table to store Nifty 50 data with the exact columns from yfinance
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS nifty50 (
-                Datetime TEXT PRIMARY KEY,
-                Open REAL,
-                High REAL,
-                Low REAL,
-                Close REAL,
-                Volume INTEGER
-            )
-        ''')
+        
+        # Dynamically create the table schema based on the DataFrame columns
+        columns = data.columns
+        column_definitions = []
+        
+        for col in columns:
+            # Determine column type (TEXT for Datetime, REAL for numerical data)
+            if data[col].dtype == 'object':  # For Datetime or other non-numerical columns
+                column_definitions.append(f'"{col}" TEXT')
+            else:  # For numerical columns
+                column_definitions.append(f'"{col}" REAL')
+
+        # Create table with dynamic column definitions
+        create_table_query = f"CREATE TABLE IF NOT EXISTS nifty50 ({', '.join(column_definitions)});"
+        cursor.execute(create_table_query)
         conn.commit()
         conn.close()
-        print("Database created successfully.")
+        print("Database and table created successfully.")
     else:
         print("Database already exists.")
 
@@ -59,12 +62,12 @@ def download_nifty50():
 
 # Main execution
 if __name__ == "__main__":
-    # Ensure the database exists
-    initialize_database(db_path)
-
-    # Download data
+    # Download the data
     nifty_data = download_nifty50()
 
-    # Append to database
+    # Ensure the database exists and the table schema is created dynamically
+    initialize_database(db_path, nifty_data)
+
+    # Append data to the database
     print("Appending data to database...")
     append_to_database(nifty_data, db_path)
