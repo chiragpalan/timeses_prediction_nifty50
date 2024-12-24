@@ -1,4 +1,5 @@
-name: Download Nifty 50 Data and Save to Database
+
+name: Download Nifty 50 Data and Save to CSV
 
 on:
   schedule:
@@ -31,13 +32,13 @@ jobs:
         run: |
           python download_nifty50.py
 
-      # Step 5: Commit and push the updated database to GitHub
-      - name: Commit and push database to GitHub
+      # Step 5: Commit and push the updated CSV file to GitHub
+      - name: Commit and push CSV to GitHub
         run: |
           git config --global user.name 'your-github-username'
           git config --global user.email 'your-email@example.com'
-          git add data/nifty50.db  # Correct path to the nifty50.db file
-          git commit -m "Update nifty50 database with new data"
+          git add data/nifty50_data.csv
+          git commit -m "Update Nifty 50 data CSV"
           git push https://github.com/${{ github.repository }}.git HEAD:main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
