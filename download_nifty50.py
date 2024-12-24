@@ -13,15 +13,15 @@ def initialize_database(db_path):
         print("Database does not exist. Creating a new database...")
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        # Create a table to store Nifty 50 data if needed
+        # Create a table to store Nifty 50 data with the exact columns from yfinance
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS nifty50 (
-                Date TEXT PRIMARY KEY,
-                open REAL,
-                high REAL,
-                low REAL,
-                close REAL,
-                volume INTEGER
+                Datetime TEXT PRIMARY KEY,
+                Open REAL,
+                High REAL,
+                Low REAL,
+                Close REAL,
+                Volume INTEGER
             )
         ''')
         conn.commit()
@@ -34,8 +34,7 @@ def initialize_database(db_path):
 def append_to_database(data, db_path):
     conn = sqlite3.connect(db_path)
     try:
-        # Ensure column names are in the correct order before appending
-        data = data[['Date', 'open', 'high', 'low', 'close', 'volume']]
+        # Append the data as is, without renaming columns
         data.to_sql('nifty50', conn, if_exists='append', index=False)
         print("Data appended successfully.")
     except Exception as e:
@@ -48,24 +47,15 @@ def download_nifty50():
     print("Downloading Nifty 50 data...")
     ticker = "^NSEI"
     data = yf.download(ticker, interval="5m", period="1d")
+    
+    # Reset index to make 'Datetime' a column and ensure the format
     data.reset_index(inplace=True)
     
-    # Rename columns to match the database schema
-    data.rename(columns={
-        'Date': 'datetime', 
-        'Open': 'open', 
-        'High': 'high', 
-        'Low': 'low', 
-        'Close': 'close', 
-        'Volume': 'volume'
-    }, inplace=True)
+    # Ensure 'Datetime' column is in the proper string format
+    data['Datetime'] = data['Datetime'].dt.strftime('%Y-%m-%d %H:%M:%S')
     
-    # Convert datetime to string format
-    data['datetime'] = data['datetime'].dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-    # Select the relevant columns
-    nifty_data = data[['datetime', 'open', 'high', 'low', 'close', 'volume']]
-    return nifty_data
+    # Return the data as is, with original column names
+    return data
 
 # Main execution
 if __name__ == "__main__":
