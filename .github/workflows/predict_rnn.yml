@@ -22,7 +22,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install pandas numpy tensorflow sklearn
+          pip install pandas numpy tensorflow scikit-learn
 
       - name: Run Prediction Script
         run: |
