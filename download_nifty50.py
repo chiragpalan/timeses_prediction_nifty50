@@ -1,49 +1,9 @@
-import sqlite3
-import yfinance as yf
 import os
+import yfinance as yf
 import pandas as pd
 
-# Define database path
-db_path = "data/nifty50.db"
-
-# Function to create a database if it doesn't exist and create table dynamically
-def initialize_database(db_path, data):
-    if not os.path.exists(db_path):
-        print("Database does not exist. Creating a new database...")
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        
-        # Dynamically create the table schema based on the DataFrame columns
-        columns = data.columns
-        column_definitions = []
-        
-        for col in columns:
-            # Determine column type (TEXT for Datetime, REAL for numerical data)
-            if data[col].dtype == 'object':  # For Datetime or other non-numerical columns
-                column_definitions.append(f'"{col}" TEXT')
-            else:  # For numerical columns
-                column_definitions.append(f'"{col}" REAL')
-
-        # Create table with dynamic column definitions
-        create_table_query = f"CREATE TABLE IF NOT EXISTS nifty50 ({', '.join(column_definitions)});"
-        cursor.execute(create_table_query)
-        conn.commit()
-        conn.close()
-        print("Database and table created successfully.")
-    else:
-        print("Database already exists.")
-
-# Function to append data to the database
-def append_to_database(data, db_path):
-    conn = sqlite3.connect(db_path)
-    try:
-        # Append the data as is, without renaming columns
-        data.to_sql('nifty50', conn, if_exists='append', index=False)
-        print("Data appended successfully.")
-    except Exception as e:
-        print(f"Error appending data: {e}")
-    finally:
-        conn.close()
+# Define the CSV file path
+csv_file_path = "data/nifty50_data.csv"
 
 # Function to download Nifty 50 data
 def download_nifty50():
@@ -57,17 +17,25 @@ def download_nifty50():
     # Ensure 'Datetime' column is in the proper string format
     data['Datetime'] = data['Datetime'].dt.strftime('%Y-%m-%d %H:%M:%S')
     
-    # Return the data as is, with original column names
+    # Return the data
     return data
+
+# Function to save or append data to a CSV file
+def save_to_csv(data, csv_file_path):
+    if not os.path.exists(csv_file_path):
+        print("CSV file does not exist. Creating a new file...")
+        data.to_csv(csv_file_path, index=False)
+        print("Data saved to new CSV file successfully.")
+    else:
+        print("CSV file exists. Appending data...")
+        # Append to the existing file
+        data.to_csv(csv_file_path, mode='a', header=False, index=False)
+        print("Data appended successfully.")
 
 # Main execution
 if __name__ == "__main__":
     # Download the data
     nifty_data = download_nifty50()
-
-    # Ensure the database exists and the table schema is created dynamically
-    initialize_database(db_path, nifty_data)
-
-    # Append data to the database
-    print("Appending data to database...")
-    append_to_database(nifty_data, db_path)
+    
+    # Save or append the data to the CSV file
+    save_to_csv(nifty_data, csv_file_path)
