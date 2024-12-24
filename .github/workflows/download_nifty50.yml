@@ -36,7 +36,7 @@ jobs:
         run: |
           git config --global user.name 'your-github-username'
           git config --global user.email 'your-email@example.com'
-          git add nifty50.db
+          git add data/nifty50.db
           git commit -m "Update nifty50 database with new data"
           git push origin main
         env:
