@@ -1,68 +1,58 @@
-import numpy as np
-import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.model_selection import train_test_split
+import os
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, Dropout
-import os
+from tensorflow.keras.layers import Dense, SimpleRNN
+from sklearn.model_selection import train_test_split
+import pandas as pd
+import numpy as np
 
-# Load and preprocess data
-def preprocess_data(file_path, lookback=60):
-    # Load data
-    df = pd.read_csv(file_path)
-    df['Datetime'] = pd.to_datetime(df['Datetime'])
-    df.set_index('Datetime', inplace=True)
+# File paths
+csv_path = "data/nifty50_data.csv"  # Input CSV file
+model_save_path = "model/rnn_model"  # Folder to save the trained model
 
-    # Select Close price for training
-    data = df[['Close']].values
+# Function to load and preprocess data
+def load_data(csv_path, lookback=60):
+    data = pd.read_csv(csv_path)
+    features = data[['Open', 'High', 'Low', 'Close', 'Volume']].values
+    scaled_features = (features - features.mean(axis=0)) / features.std(axis=0)
 
-    # Normalize the data
-    scaler = MinMaxScaler()
-    scaled_data = scaler.fit_transform(data)
-
-    # Prepare input-output sequences
+    # Prepare data for RNN
     X, y = [], []
-    for i in range(lookback, len(scaled_data)):
-        X.append(scaled_data[i-lookback:i])
-        y.append(scaled_data[i])
-    return np.array(X), np.array(y), scaler
+    for i in range(lookback, len(scaled_features)):
+        X.append(scaled_features[i - lookback:i])  # Lookback window
+        y.append(scaled_features[i, 3])  # Predict 'Close' price
 
-# Build RNN model
-def build_rnn(lookback, dropout_rate, units):
+    return np.array(X), np.array(y)
+
+# Function to create and train RNN model
+def train_rnn(X, y):
     model = Sequential([
-        LSTM(units=units, return_sequences=True, input_shape=(lookback, 1)),
-        Dropout(dropout_rate),
-        LSTM(units=units, return_sequences=False),
-        Dropout(dropout_rate),
-        Dense(units=1)
+        SimpleRNN(50, activation='relu', return_sequences=False, input_shape=(X.shape[1], X.shape[2])),
+        Dense(1)
     ])
     model.compile(optimizer='adam', loss='mean_squared_error')
+    model.fit(X, y, epochs=50, batch_size=32)
     return model
 
-# Train and save the model
-def train_and_save_model(file_path, model_path):
-    # Preprocess data
-    lookback = 60
-    X, y, scaler = preprocess_data(file_path, lookback)
+# Save the trained model
+def save_model(model, save_path):
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    model.save(save_path)
+    print(f"Model saved successfully at {save_path}.")
 
-    # Split data
+# Main execution
+if __name__ == "__main__":
+    # Load and preprocess data
+    if not os.path.exists(csv_path):
+        raise FileNotFoundError(f"{csv_path} does not exist.")
+    X, y = load_data(csv_path)
+
+    # Split data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    # Build model
-    model = build_rnn(lookback, dropout_rate=0.2, units=50)
+    # Train RNN model
+    print("Training RNN model...")
+    rnn_model = train_rnn(X_train, y_train)
 
-    # Train model
-    model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_test, y_test))
-
-    # Save model and scaler
-    os.makedirs(model_path, exist_ok=True)
-    model.save(os.path.join(model_path, "rnn_model.h5"))
-    np.save(os.path.join(model_path, "scaler.npy"), scaler)
-    print("Model and scaler saved successfully.")
-
-# Main script
-if __name__ == "__main__":
-    csv_path = "data/nifty50_data.csv"
-    model_path = "RNN_model"
-    train_and_save_model(csv_path, model_path)
+    # Save the trained model
+    save_model(rnn_model, model_save_path)
