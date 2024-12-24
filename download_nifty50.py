@@ -16,7 +16,7 @@ def initialize_database(db_path):
         # Create a table to store Nifty 50 data if needed
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS nifty50 (
-                datetime TEXT PRIMARY KEY,
+                Date TEXT PRIMARY KEY,
                 open REAL,
                 high REAL,
                 low REAL,
@@ -35,7 +35,7 @@ def append_to_database(data, db_path):
     conn = sqlite3.connect(db_path)
     try:
         # Ensure column names are in the correct order before appending
-        data = data[['datetime', 'open', 'high', 'low', 'close', 'volume']]
+        data = data[['Date', 'open', 'high', 'low', 'close', 'volume']]
         data.to_sql('nifty50', conn, if_exists='append', index=False)
         print("Data appended successfully.")
     except Exception as e:
@@ -52,7 +52,7 @@ def download_nifty50():
     
     # Rename columns to match the database schema
     data.rename(columns={
-        'Datetime': 'datetime', 
+        'Date': 'datetime', 
         'Open': 'open', 
         'High': 'high', 
         'Low': 'low', 
