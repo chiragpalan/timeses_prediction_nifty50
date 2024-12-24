@@ -4,6 +4,7 @@ on:
   schedule:
     # Run every Saturday at 9:00 AM IST
     - cron: '30 3 * * 6'  # 9:00 AM IST = 3:30 AM UTC
+  workflow_dispatch:
 
 jobs:
   train-rnn:
