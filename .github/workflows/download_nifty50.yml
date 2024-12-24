@@ -34,8 +34,8 @@ jobs:
       # Step 5: Commit and push the updated database to GitHub
       - name: Commit and push database to GitHub
         run: |
-          git config --global user.name 'your-github-username'
-          git config --global user.email 'your-email@example.com'
+          git config --global user.name 'chiragpalan'
+          git config --global user.email 'chirag.palan@gmail.com'
           git add data/nifty50.db
           git commit -m "Update nifty50 database with new data"
           git push origin main
