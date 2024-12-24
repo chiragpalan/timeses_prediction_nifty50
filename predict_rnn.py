@@ -7,10 +7,12 @@ from datetime import datetime
 # File paths
 csv_path = "data/nifty50_data.csv"  # Path to Nifty50 CSV data
 prediction_path = "data/prediction.csv"  # Path to save predictions
-model_path = "RNN_model"  # Folder containing the trained model
+model_path = "model/rnn_model"  # Folder containing the trained model
 
 # Load the trained RNN model
 def load_model(model_path):
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"Model not found at {model_path}.")
     model = tf.keras.models.load_model(model_path)
     print("Model loaded successfully.")
     return model
