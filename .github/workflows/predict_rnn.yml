@@ -38,13 +38,13 @@ jobs:
       - name: Run prediction script
         run: python predict_rnn.py
 
-      # Step 6: Add, commit, and push predictions
-      - name: Commit and push predictions
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Step 6: Add the file and commit changes (Track the file in git)
+      - name: Add and commit changes
         run: |
+          git add data/prediction.csv
           git config --global user.name "chiragpalan"
           git config --global user.email "your_email@example.com"
-          git add data/prediction.csv
+          git status # Debug step to ensure the file is being tracked
           git commit -m "Updated predictions" || echo "No changes to commit"
           git push
+
