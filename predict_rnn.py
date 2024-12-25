@@ -29,8 +29,25 @@ def preprocess_data(data, lookback=60):
     """
     Prepares the input data for prediction based on lookback window.
     """
+    # Convert columns to numeric, coercing errors to NaN
+    data['Open'] = pd.to_numeric(data['Open'], errors='coerce')
+    data['High'] = pd.to_numeric(data['High'], errors='coerce')
+    data['Low'] = pd.to_numeric(data['Low'], errors='coerce')
+    data['Close'] = pd.to_numeric(data['Close'], errors='coerce')
+    data['Volume'] = pd.to_numeric(data['Volume'], errors='coerce')
+
+    # Handle NaN values by dropping rows with NaN in critical columns
+    data.dropna(subset=['Open', 'High', 'Low', 'Close', 'Volume'], inplace=True)
+
+    # Ensure there are at least 'lookback' rows
+    if len(data) < lookback:
+        raise ValueError(f"Insufficient data: At least {lookback} rows are required for prediction.")
+
+    # Normalize features
     features = data[['Open', 'High', 'Low', 'Close', 'Volume']].values
     scaled_features = (features - features.mean(axis=0)) / features.std(axis=0)
+
+    # Get the most recent 'lookback' rows
     X = [scaled_features[-lookback:]]  # Get the most recent 'lookback' rows
     return np.array(X)
 
@@ -43,10 +60,6 @@ def predict_future(csv_path, model_path):
     if not os.path.exists(csv_path):
         raise FileNotFoundError(f"CSV file not found at {csv_path}.")
     data = pd.read_csv(csv_path)
-
-    # Ensure the data has enough rows for lookback window
-    if len(data) < 60:
-        raise ValueError("Insufficient data: At least 60 rows are required for prediction.")
 
     # Load the trained model
     model = load_model(model_path)
