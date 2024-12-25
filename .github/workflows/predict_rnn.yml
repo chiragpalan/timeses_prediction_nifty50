@@ -32,19 +32,23 @@ jobs:
           mkdir -p data
           if [ ! -f data/prediction.csv ]; then
             echo "Timestamp,15_min,30_min,45_min,60_min" > data/prediction.csv
+            git add data/prediction.csv
           fi
 
       # Step 5: Run prediction script
       - name: Run prediction script
         run: python predict_rnn.py
 
-      # Step 6: Add the file and commit changes (Track the file in git)
-      - name: Add and commit changes
+      # Step 6: Check status and add changes
+      - name: Check status and add changes
         run: |
-          git add data/prediction.csv
+          git status  # Debug step to check files
+          git add data/prediction.csv  # Add the prediction file if any changes
+          
+      # Step 7: Commit and push changes
+      - name: Commit and push changes
+        run: |
           git config --global user.name "chiragpalan"
           git config --global user.email "your_email@example.com"
-          git status # Debug step to ensure the file is being tracked
           git commit -m "Updated predictions" || echo "No changes to commit"
           git push
-
