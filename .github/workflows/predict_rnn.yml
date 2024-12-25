@@ -26,29 +26,24 @@ jobs:
           python -m pip install --upgrade pip
           pip install tensorflow pandas numpy scikit-learn
 
-      # Step 4: Ensure the `data` directory and `prediction.csv` file exist
-      - name: Create `data/prediction.csv` if not exists
+      # Step 4: Check if prediction.csv exists and add to git
+      - name: Check if prediction.csv exists and add it
         run: |
-          mkdir -p data
           if [ ! -f data/prediction.csv ]; then
             echo "Timestamp,15_min,30_min,45_min,60_min" > data/prediction.csv
-            git add data/prediction.csv
           fi
+          git status  # Check if the file is detected by git
+          git add data/prediction.csv  # Ensure the file is added
 
       # Step 5: Run prediction script
       - name: Run prediction script
         run: python predict_rnn.py
 
-      # Step 6: Check status and add changes
-      - name: Check status and add changes
-        run: |
-          git status  # Debug step to check files
-          git add data/prediction.csv  # Add the prediction file if any changes
-          
-      # Step 7: Commit and push changes
+      # Step 6: Add and commit the file with updated predictions
       - name: Commit and push changes
         run: |
           git config --global user.name "chiragpalan"
-          git config --global user.email "chirag.palan@gmail.com"
+          git config --global user.email "your_email@example.com"
+          git status  # Confirm file is staged
           git commit -m "Updated predictions" || echo "No changes to commit"
           git push
