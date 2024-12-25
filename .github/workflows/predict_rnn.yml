@@ -26,7 +26,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install tensorflow pandas numpy scikit-learn
 
-      # Step 4: Check if prediction.csv exists and add to git
+      # Step 4: Check if prediction.csv exists and add it
       - name: Check if prediction.csv exists and add it
         run: |
           if [ ! -f data/prediction.csv ]; then
