@@ -1,38 +1,35 @@
-name: Train RNN Model
+name: Train and Save RNN Model
 
 on:
+  workflow_dispatch: # Allows manual triggering from the GitHub Actions UI
   schedule:
-    # Run every Saturday at 9:00 AM IST
-    - cron: '30 3 * * 6'  # 9:00 AM IST = 3:30 AM UTC
-  workflow_dispatch:
+    - cron: '30 3 * * 6' # Every Saturday at 9:00 AM IST
 
 jobs:
-  train-rnn:
+  train_and_save_rnn:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set Up Python
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.8
 
-      - name: Install Dependencies
-        run: |
-          pip install pandas numpy tensorflow scikit-learn
+      - name: Install dependencies
+        run: pip install pandas numpy tensorflow scikit-learn
 
-      - name: Train RNN Model
-        run: |
-          python train_rnn.py
+      - name: Run training script
+        run: python train_rnn.py
 
-      - name: Commit and Push Model
+      - name: Commit and push trained model
         run: |
           git config --global user.name "chiragpalan"
           git config --global user.email "your-email@example.com"
-          git add RNN_model/
-          git commit -m "Update RNN model on Saturday training"
+          git add model/rnn_model/*  # Add all files in the model directory
+          git commit -m "Updated RNN model"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
