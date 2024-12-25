@@ -49,6 +49,6 @@ jobs:
       - name: Commit and push changes
         run: |
           git config --global user.name "chiragpalan"
-          git config --global user.email "your_email@example.com"
+          git config --global user.email "chirag.palan@gmail.com"
           git commit -m "Updated predictions" || echo "No changes to commit"
           git push
