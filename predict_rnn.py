@@ -12,6 +12,10 @@ model_path = "model/rnn_model"  # Folder containing the trained model
 # Ensure the data folder exists
 os.makedirs(os.path.dirname(prediction_path), exist_ok=True)
 
+# Create an empty prediction.csv if it doesn't exist
+if not os.path.exists(prediction_path):
+    pd.DataFrame(columns=['Timestamp', '15_min', '30_min', '45_min', '60_min']).to_csv(prediction_path, index=False)
+
 # Load the trained RNN model
 def load_model(model_path):
     if not os.path.exists(model_path):
