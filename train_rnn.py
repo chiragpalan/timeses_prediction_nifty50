@@ -11,18 +11,29 @@ csv_path = "data/nifty50_data.csv"  # Input CSV file
 model_save_path = "model/rnn_model"  # Folder to save the trained model
 
 # Function to load and preprocess data
-def load_data(csv_path, lookback=60):
+def load_data(csv_path):
+    # Load the data from the CSV file
     data = pd.read_csv(csv_path)
-    features = data[['Open', 'High', 'Low', 'Close', 'Volume']].values
-    scaled_features = (features - features.mean(axis=0)) / features.std(axis=0)
+    
+    # Ensure 'Datetime' or other non-numeric columns are excluded
+    numeric_data = data.select_dtypes(include=['float64', 'int64'])
+    
+    # Scale the features
+    scaled_features = (numeric_data - numeric_data.mean(axis=0)) / numeric_data.std(axis=0)
+    
+    # Prepare input (X) and target (y) variables
+    X = []
+    y = []
+    for i in range(60, len(scaled_features)):
+        X.append(scaled_features.iloc[i-60:i].values)  # 60 timesteps
+        y.append(scaled_features.iloc[i].values)       # Target value at the next step
+    
+    # Convert to NumPy arrays
+    X = np.array(X)
+    y = np.array(y)
+    
+    return X, y
 
-    # Prepare data for RNN
-    X, y = [], []
-    for i in range(lookback, len(scaled_features)):
-        X.append(scaled_features[i - lookback:i])  # Lookback window
-        y.append(scaled_features[i, 3])  # Predict 'Close' price
-
-    return np.array(X), np.array(y)
 
 # Function to create and train RNN model
 def train_rnn(X, y):
