@@ -52,6 +52,7 @@ def preprocess_data(data, lookback=60):
     return np.array(X)
 
 # Generate future predictions
+# Generate future predictions
 def predict_future(csv_path, model_path):
     """
     Predict Nifty 50 values for the next 15, 30, 45, and 60 minutes.
@@ -59,7 +60,12 @@ def predict_future(csv_path, model_path):
     # Load the latest CSV data
     if not os.path.exists(csv_path):
         raise FileNotFoundError(f"CSV file not found at {csv_path}.")
+    
     data = pd.read_csv(csv_path)
+
+    # Drop the row containing ^NSE (assuming it's right below the header)
+    if '^NSE' in data.iloc[0].values:
+        data = data.drop(index=0).reset_index(drop=True)
 
     # Load the trained model
     model = load_model(model_path)
