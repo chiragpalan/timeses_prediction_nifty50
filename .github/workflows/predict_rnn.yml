@@ -2,8 +2,8 @@ name: Predict RNN
 
 on:
   workflow_dispatch: # Allows manual trigger
-  schedule: # Optional: Schedule for running the workflow
-    - cron: "0 * * * *" # Runs every hour (adjust as needed)
+  schedule: # Optional: Run at specified times
+    - cron: "0 * * * *" # Every hour (adjust as needed)
 
 jobs:
   predict:
@@ -26,12 +26,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install tensorflow pandas numpy scikit-learn
 
-      # Step 4: Ensure necessary directories and files exist
-      - name: Ensure prediction file exists
+      # Step 4: Ensure the `data` directory and `prediction.csv` file exist
+      - name: Create `data/prediction.csv` if not exists
         run: |
           mkdir -p data
           if [ ! -f data/prediction.csv ]; then
-            echo "Creating an empty prediction.csv file"
             echo "Timestamp,15_min,30_min,45_min,60_min" > data/prediction.csv
           fi
 
@@ -39,8 +38,10 @@ jobs:
       - name: Run prediction script
         run: python predict_rnn.py
 
-      # Step 6: Commit and push updated predictions
-      - name: Commit Predictions
+      # Step 6: Add, commit, and push predictions
+      - name: Commit and push predictions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "chiragpalan"
           git config --global user.email "your_email@example.com"
